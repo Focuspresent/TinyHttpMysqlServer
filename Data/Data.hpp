@@ -23,6 +23,7 @@ public:
             mysql_close(&m_conn);
             exit(-1);
         }
+        mysql_set_character_set(&m_conn,"utf8mb4");
     }
     
     virtual ~Data()
@@ -108,7 +109,7 @@ protected:
     virtual json to_json_()=0;
     //将json变成数据
     virtual void from_json_(const json& j)=0;
-private:
+    
     MYSQL m_conn;
     std::string m_url;
     std::string m_user;
@@ -126,6 +127,25 @@ public:
     void show_() override
     {
         std::cout<<"测试多态"<<std::endl;
+        int n=mysql_query(&m_conn,"SELECT * FROM mission_data");
+        if(n>0){
+            fprintf(stderr,"mysql_query failed:%d",mysql_errno(&m_conn));
+            mysql_close(&m_conn);
+            exit(-1);
+        }
+        MYSQL_RES* res=mysql_store_result(&m_conn);
+        if(res){
+            MYSQL_ROW line;
+            int rows=mysql_num_rows(res);
+            int cols=mysql_num_fields(res);
+            for(int i=0;i<rows;i++){
+                line=mysql_fetch_row(res);
+                for(int j=0;j<cols;j++){
+                    std::cout<<line[j]<<" ";
+                }
+                std::cout<<std::endl;
+            }
+        }
     }
 
     json to_json_() override
