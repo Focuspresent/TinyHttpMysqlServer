@@ -83,6 +83,16 @@ public:
         return query_(std::move(sql));
     }
 
+    json To_Json()
+    {
+        return std::move(to_json_());
+    }
+
+    void From_Json(const json& j)
+    {
+        from_json_(std::move(j));
+    }
+
 protected:
     //总体展示某个表的数据
     virtual void show_(){}
@@ -94,6 +104,10 @@ protected:
     virtual bool change_(const std::string& sql){}
     //查询某个表数据
     virtual bool query_(const std::string& sql){}
+    //将某个数据变成json
+    virtual json to_json_()=0;
+    //将json变成数据
+    virtual void from_json_(const json& j)=0;
 private:
     MYSQL m_conn;
     std::string m_url;
@@ -109,9 +123,30 @@ public:
     :Data(url,user,password,databasename)
     {}
     
-    void show_()
+    void show_() override
     {
         std::cout<<"测试多态"<<std::endl;
+    }
+
+    json to_json_() override
+    {
+        json j{{"video_id",m_video_id},
+                {"description",m_description},
+                {"navigation_id_list",m_navigation_id_list},
+                {"water_data_id_list",m_water_data_id_list},
+                {"priority",m_priority},
+                {"status",m_status},
+                {"position_list",m_position_list},
+                {"finish_time",m_finish_time},
+                {"create_time",m_create_time},
+                {"user_id",m_user_id},
+                {"mission_id"},m_mission_id};
+        return std::move(j);
+    }
+
+    ///TODO
+    void from_json_(const json& j) override
+    {   
     }
 
 private:
