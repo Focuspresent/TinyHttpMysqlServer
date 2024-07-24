@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <mysql/mysql.h>
+#include <memory>
 
 #include "../JsonCpp/json.hpp"
 using json=nlohmann::json;
@@ -23,21 +24,76 @@ public:
             exit(-1);
         }
     }
+    
     virtual ~Data()
     {
         mysql_close(&m_conn);
+        printf("close mysql connect\n");
     }
+    
+    /**
+     * @brief 对某个表整体展示
+     */
+    void Show()
+    {
+        show_();
+    }
+    
+    /**
+     * @brief 对某个表执行sql插入语句
+     * 
+     * @return 是否成功
+     * @returns bool
+     */
+    bool Insert(const std::string& sql)
+    {
+        return insert_(std::move(sql));
+    }
+    
+    /**
+     * @brief 对某个表执行sql删除语句
+     * 
+     * @return 是否成功
+     * @returns bool
+     */
+    bool Delete(const std::string& sql)
+    {
+        return delete_(std::move(sql));
+    }
+
+    /**
+     * @brief 对某个表执行sql更改语句
+     * 
+     * @return 是否成功
+     * @returns bool
+     */
+    bool Change(const std::string& sql)
+    {
+        return change_(std::move(sql));
+    }
+
+    /**
+     * @brief 对某个表执行sql查询语句
+     * 
+     * @return 是否成功
+     * @returns bool
+     */
+    bool Query(const std::string& sql)
+    {
+        return query_(std::move(sql));
+    }
+
 protected:
     //总体展示某个表的数据
     virtual void show_(){}
     //增加某个表数据
-    virtual void insert_(const std::string& sql){}
+    virtual bool insert_(const std::string& sql){}
     //删除某个表数据
-    virtual void delete_(const std::string& sql){}
+    virtual bool delete_(const std::string& sql){}
     //改动某个表数据
-    virtual void change_(const std::string& sql){}
+    virtual bool change_(const std::string& sql){}
     //查询某个表数据
-    virtual void query_(const std::string& sql){}
+    virtual bool query_(const std::string& sql){}
 private:
     MYSQL m_conn;
     std::string m_url;
@@ -53,7 +109,7 @@ public:
     :Data(url,user,password,databasename)
     {}
     
-    void show()
+    void show_()
     {
         std::cout<<"测试多态"<<std::endl;
     }
