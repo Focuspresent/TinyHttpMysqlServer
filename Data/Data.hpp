@@ -2,12 +2,9 @@
 #define __DATA_HPP
 
 #include <iostream>
-#include <mysql/mysql.h>
 #include <memory>
 
-#include "../JsonCpp/json.hpp"
-using json=nlohmann::json;
-
+#include "../MysqlCpp/mysql.hpp"
 
 namespace Data
 {
@@ -15,21 +12,12 @@ class Data
 {
 public:
     Data(const std::string& url,const std::string& user,const std::string& password,const std::string& databasename)
-    :m_url(url),m_user(user),m_password(password),m_databasename(databasename)
+    :m_mysql(url,user,password,databasename)
     {
-        mysql_init(&m_conn);
-        if(mysql_real_connect(&m_conn,m_url.c_str(),m_user.c_str(),m_password.c_str(),m_databasename.c_str(),0,nullptr,0)==NULL){
-            perror("connect mysql falied");
-            mysql_close(&m_conn);
-            exit(-1);
-        }
-        mysql_set_character_set(&m_conn,"utf8mb4");
     }
     
     virtual ~Data()
     {
-        mysql_close(&m_conn);
-        printf("close mysql connect\n");
     }
     
     /**
@@ -110,11 +98,7 @@ protected:
     //将json变成数据
     virtual void from_json_(const json& j)=0;
     
-    MYSQL m_conn;
-    std::string m_url;
-    std::string m_user;
-    std::string m_password;
-    std::string m_databasename;
+    Mysql m_mysql;
 };
 
 class Mission:public Data
@@ -127,25 +111,11 @@ public:
     void show_() override
     {
         std::cout<<"测试多态"<<std::endl;
-        int n=mysql_query(&m_conn,"SELECT * FROM mission_data");
-        if(n>0){
-            fprintf(stderr,"mysql_query failed:%d",mysql_errno(&m_conn));
-            mysql_close(&m_conn);
-            exit(-1);
-        }
-        MYSQL_RES* res=mysql_store_result(&m_conn);
-        if(res){
-            MYSQL_ROW line;
-            int rows=mysql_num_rows(res);
-            int cols=mysql_num_fields(res);
-            for(int i=0;i<rows;i++){
-                line=mysql_fetch_row(res);
-                for(int j=0;j<cols;j++){
-                    std::cout<<line[j]<<" ";
-                }
-                std::cout<<std::endl;
-            }
-        }
+        json j;
+        int n=m_mysql.Query("SELECT * FROM mission_data",j);
+        std::cout<<j<<std::endl;
+        n=m_mysql.Query("SELECT misson_id,user_id FROM mission_data",j);
+        std::cout<<j<<std::endl;
     }
 
     json to_json_() override
