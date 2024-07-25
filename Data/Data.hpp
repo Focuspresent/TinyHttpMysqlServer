@@ -75,6 +75,53 @@ namespace Data
         }
 
     };
+
+    class SignUp:public BasicData
+    {
+        enum{
+            SIGNUP_SUCCESS=200,
+            SIGNUP_SQLFAIL=401,
+            SIGNUP_EXIST=402,
+            SIGNUP_EMPTY=403
+        };
+    public:
+        SignUp(const std::string& url,const std::string& user,const std::string& password,const std::string& databasename)
+        :BasicData(url,user,password,databasename)
+        {            
+        }
+
+        int execute_(const json& req,json& res) override
+        {
+            res.clear();
+            int n;
+            res["state"]=SIGNUP_SUCCESS;
+            res["message"]="注册成功";
+            try{
+                std::string acc=req.at("Acc_sign").get<std::string>();
+                std::string username=req.at("username").get<std::string>();
+                std::string password=req.at("psw_sign").get<std::string>();
+                std::string phone_number=req.at("phone_number").get<std::string>();
+                //std::cout<<fmt::format("INSERT INTO VALUES({},'{}','{}','{}')",acc,username,password,phone_number)<<std::endl;
+                n=m_mysql.Query(fmt::format("INSERT INTO user_accounts(user_id,username,password,phone_number) VALUES({},'{}','{}','{}')",acc,username,password,phone_number));
+            }catch(std::exception& e){
+                fprintf(stderr,"执行错误\n");
+                res["state"]=SIGNUP_EMPTY;
+                res["message"]="注册失败:参数错误 或 解析错误";
+                return n;
+            }
+            if(n){
+                if(1062==n){
+                    res["state"]=SIGNUP_EXIST;
+                    res["message"]="用户已存在";
+                }else{
+                    res["state"]=SIGNUP_SQLFAIL;
+                    res["message"]="执行语句错误";
+                }
+            }
+            return n;
+        }
+
+    };
 }
 
 #endif
