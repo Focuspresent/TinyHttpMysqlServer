@@ -56,6 +56,7 @@ namespace Data
             int n;
             res["state"]=LOGIN_FAIL;
             res["message"]="登录失败";
+            std::cout<<req<<std::endl;
             try{
                 std::string acc=req.at("userAcc").get<std::string>();
                 std::string pwd=req.at("userPwd").get<std::string>();
