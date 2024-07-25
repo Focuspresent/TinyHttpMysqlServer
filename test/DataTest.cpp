@@ -9,7 +9,8 @@ using namespace Data;
 
 int main()
 {
-    /* BasicData* data=new Login("47.96.237.24","root","Qwe123456789...++","qianduoduo");
+#if 0
+    BasicData* data=new Login("47.96.237.24","root","Qwe123456789...++","qianduoduo");
     json j;
     data->Execute({{"userAcc","123"},{"userPwd","456"}},j);
     std::cout<<j<<std::endl;
@@ -21,8 +22,10 @@ int main()
     std::cout<<j<<std::endl;
     data->Execute({{"userAcc","1069366295"},{"userPwd","qwe123"}},j);
     std::cout<<j<<std::endl;
-    delete data; */
+    delete data;
+#endif
 
+#if 1
     BasicData* data=new SignUp("47.96.237.24","root","Qwe123456789...++","qianduoduo");
     json j;
     data->Execute({{"Acc_sign","11"},{"psw_sign","333"},{"phone_number","333"}},j);
@@ -32,5 +35,6 @@ int main()
     data->Execute({{"Acc_sign","13579"},{"username","2468"},{"psw_sign","996"},{"phone_number","12345678"}},j);
     print(j);
     delete data;
+#endif
     return 0;
 }

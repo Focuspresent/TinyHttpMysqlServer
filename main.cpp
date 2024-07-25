@@ -22,7 +22,15 @@ int main()
         res.set_content(res_j.dump(),"text/json");
         //res.set_content("tt","text/plain");
         delete data;
-        data=nullptr;
+    });
+
+    server.Post("/userSignup",[&](const Request& req,Response& res){
+        BasicData* data=new SignUp(url,user,password,databasename);
+        json res_j;
+        data->Execute(json::parse(req.body.c_str()),res_j);
+        res.set_content(res_j.dump(),"text/json");
+        //res.set_content("tt","text/plain");
+        delete data;
     });
 
     server.listen("0.0.0.0",8085);
