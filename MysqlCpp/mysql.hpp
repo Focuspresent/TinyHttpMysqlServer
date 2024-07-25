@@ -47,11 +47,11 @@ public:
     int Query(const std::string& sql,json& j)
     {
         int n=mysql_query(&m_conn,sql.c_str());
+        j.clear();
         if(n){
             n=mysql_errno(&m_conn);
             return n;
         }
-        j.clear();
         MYSQL_RES* res=mysql_store_result(&m_conn);
         if(res==nullptr){
             fprintf(stdout,"return datas is empty\n");
@@ -64,10 +64,12 @@ public:
             line=mysql_fetch_row(res);
             json tmp;
             for(int j=0;j<cols;j++){
+                if(line[j]==NULL) line[j]="";
                 tmp[col_name[j].name]=line[j];
             }
             j.push_back(std::move(tmp));
         }
+        std::cout<<j<<std::endl;
         return n;
     }
 
