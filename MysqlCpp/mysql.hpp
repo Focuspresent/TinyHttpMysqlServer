@@ -51,6 +51,7 @@ public:
             n=mysql_errno(&m_conn);
             return n;
         }
+        j.clear();
         MYSQL_RES* res=mysql_store_result(&m_conn);
         if(res==nullptr){
             fprintf(stdout,"return datas is empty\n");
@@ -59,7 +60,6 @@ public:
         int rows=mysql_num_rows(res);
         int cols=mysql_num_fields(res);
         MYSQL_FIELD* col_name=mysql_fetch_field(res);
-        j.clear();
         for(int i=0;i<rows;i++){
             line=mysql_fetch_row(res);
             json tmp;
