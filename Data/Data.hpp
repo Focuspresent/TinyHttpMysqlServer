@@ -11,6 +11,10 @@
 
 namespace Data
 {
+    enum{
+        SQL_FAIL=500,
+        JSON_FAIL=501
+    };
     class BasicData
     {
     public:
@@ -80,9 +84,8 @@ namespace Data
     {
         enum{
             SIGNUP_SUCCESS=200,
-            SIGNUP_SQLFAIL=401,
             SIGNUP_EXIST=402,
-            SIGNUP_EMPTY=403
+            SIGNUP_EMPTY=403,
         };
     public:
         SignUp(const std::string& url,const std::string& user,const std::string& password,const std::string& databasename)
@@ -106,7 +109,7 @@ namespace Data
             }catch(std::exception& e){
                 fprintf(stderr,"执行错误\n");
                 res["state"]=SIGNUP_EMPTY;
-                res["message"]="注册失败:参数错误 或 解析错误";
+                res["message"]="参数错误 或 解析错误";
                 return n;
             }
             if(n){
@@ -114,13 +117,84 @@ namespace Data
                     res["state"]=SIGNUP_EXIST;
                     res["message"]="用户已存在";
                 }else{
-                    res["state"]=SIGNUP_SQLFAIL;
+                    res["state"]=SQL_FAIL;
+                    res["errno"]=n;
                     res["message"]="执行语句错误";
                 }
             }
             return n;
         }
 
+    };
+
+    class DownloadWaterData: public BasicData
+    {
+        enum{
+            DownloadWaterData_SUCCESS=200,
+            DownloadWaterData_NOEXIST=404
+        };
+    public:
+        DownloadWaterData(const std::string& url,const std::string& user,const std::string& password,const std::string& databasename)
+        :BasicData(url,user,password,databasename)
+        {
+        }
+
+        int execute_(const json& req,json& res) override
+        {
+            res.clear();
+            int n;
+            res["state"]=DownloadWaterData_SUCCESS;
+            res["message"]="下载成功";
+            try{
+                std::string id=req.at("water_data_id").get<std::string>();
+                json mysql_res;
+                n=m_mysql.Query(fmt::format("SELECT * FROM water_quality_data WHERE water_data_id={}",id),mysql_res);
+                if(mysql_res.empty()){
+                    res["state"]=DownloadWaterData_NOEXIST;
+                    res["message"]="下载失败";
+                    return n;
+                }
+                res["obj"]=mysql_res[0];
+            }catch(std::exception& e){
+                fprintf(stderr,"执行错误\n");
+                res["state"]=JSON_FAIL;
+                res["message"]="参数错误 或 解析错误";
+                return n;
+            }
+        }
+    };
+
+    class ShowWaterData:public BasicData
+    {
+        enum{
+            ShowWaterData_SUCCESS=200,
+            ShowWaterData_ERROR=400,
+            ShowWaterData_NOEXIST=404
+        };
+    public:
+        ShowWaterData(const std::string& url,const std::string& user,const std::string& password,const std::string& databasename)
+        :BasicData(url,user,password,databasename)
+        {
+        }
+
+        int execute_(const json& req,json& res) override
+        {
+            res.clear();
+            json mysql_res;
+            int n=m_mysql.Query(fmt::format("SELECT * FROM water_quality_data"),mysql_res);
+            if(mysql_res.empty()){
+                res["state"]=ShowWaterData_NOEXIST;
+                res["message"]="未找到";
+            }else if(n){
+                res["state"]=ShowWaterData_ERROR;
+                res["message"]="参数错误";
+            }else{
+                res["state"]=ShowWaterData_SUCCESS;
+                res["message"]="展示数据获取成功";
+                res["excel"]=mysql_res;
+            }
+            return n;
+        }
     };
 }
 
