@@ -58,12 +58,31 @@ protected:
 
     std::string delete_(const json& j)
     {
-
+        json con_j=json::parse(j["condition"].get<std::string>());
+        std::string con;
+        for(auto& entry: con_j.items()){
+            con+=entry.key()+"="+entry.value().dump()+" AND";
+        }
+        for(int i=0;i<4;i++) con.pop_back();
+        return fmt::format("delete from {} where {}",m_table_name,con);
     }
 
     std::string update_(const json& j)
     {
-
+        std::string str,con;
+        for(auto& entry: j.items()){
+            if(entry.key()=="condition"){
+                json con_j=json::parse(entry.value());
+                for(auto& e: con_j.items()){
+                    con+=e.key()+"="+e.value().dump()+" AND";
+                }
+            }else{
+                str+=entry.key()+" = "+entry.value().dump()+", ";
+            }
+        }
+        for(int i=0;i<2;i++) str.pop_back();
+        for(int i=0;i<4;i++) con.pop_back();
+        return fmt::format("update {} set {} where {}",m_table_name,str,con);
     }
 
     std::string select_(const json& j)
