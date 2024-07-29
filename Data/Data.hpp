@@ -9,6 +9,72 @@
 #define FMT_HEADER_ONLY 
 #include "../Fmt/core.h"
 
+bool operator==(const std::string & s1,const char* s2)
+{
+    if(s1.size()!=strlen(s2)) return false;
+    for(int i=0;i<s1.size();i++){
+        if(tolower(s1[i])!=tolower(s2[i])) return false; 
+    }
+    return true;       
+}
+
+class Sql
+{
+public:
+    std::string to_string(json& j)
+    {
+        try{
+            std::string action=j["action"].get<std::string>();
+            m_table_name=j["table_name"].get<std::string>();
+            j.erase("action");
+            j.erase("table_name");
+            if(action=="insert"){
+                return insert_(j);
+            }else if(action=="delete"){
+                return delete_(j);
+            }else if(action=="update"){
+                return update_(j);
+            }else if(action=="select"){
+                return select_(j);
+            }else{
+                throw "没有匹配的";
+            }
+        }catch(std::exception& e){
+            fprintf(stderr,"%s\n",e.what());
+        }
+    }
+
+protected:
+    std::string insert_(const json& j)
+    {
+        std::string pre="(",suf="(";
+        for(auto& entry: j.items()){
+            pre+=entry.key()+", ";
+            suf+=entry.value().dump()+", ";
+        }
+        pre+=")";suf+=")";
+        return fmt::format("insert into {} {} values {}",m_table_name,pre,suf);
+    }
+
+    std::string delete_(const json& j)
+    {
+
+    }
+
+    std::string update_(const json& j)
+    {
+
+    }
+
+    std::string select_(const json& j)
+    {
+        
+    }
+
+private:
+    std::string m_table_name;
+};
+
 namespace Data
 {
     enum{
