@@ -63,7 +63,7 @@ protected:
         for(auto& entry: con_j.items()){
             con+=entry.key()+"="+entry.value().dump()+" AND";
         }
-        for(int i=0;i<4;i++) con.pop_back();
+        for(int i=0;con.size()&&i<4;i++) con.pop_back();
         return fmt::format("delete from {} where {}",m_table_name,con);
     }
 
@@ -80,14 +80,30 @@ protected:
                 str+=entry.key()+" = "+entry.value().dump()+", ";
             }
         }
-        for(int i=0;i<2;i++) str.pop_back();
-        for(int i=0;i<4;i++) con.pop_back();
+        for(int i=0;str.size()&&i<2;i++) str.pop_back();
+        for(int i=0;con.size()&&i<4;i++) con.pop_back();
         return fmt::format("update {} set {} where {}",m_table_name,str,con);
     }
 
     std::string select_(const json& j)
     {
-        
+        std::string str,con;
+        int number=-1;
+        for(auto& entry: j.items()){
+            if(entry.key()=="condition"){
+                json con_j=json::parse(entry.value());
+                for(auto& e: con_j.items()){
+                    con+=e.key()+"="+e.value().dump()+" AND";
+                }
+            }else if(entry.key()=="number"){
+                number=entry.value().get<std::uint32_t>();
+            }else{
+                str+=entry.key()+", ";
+            }
+        }
+        for(int i=0;con.size()&&i<4;i++) con.pop_back();
+        for(int i=0;str.size()&&i<2;i++) str.pop_back();
+        return  fmt::format("select {} from {} {} {}",str,m_table_name,con.size()?"where "+con:"",number>0?"limit "+std::to_string(number):"");
     }
 
 private:
