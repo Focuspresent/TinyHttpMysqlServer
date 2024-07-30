@@ -21,6 +21,12 @@ bool operator==(const std::string & s1,const char* s2)
 class Sql
 {
 public:
+    static const Sql* GetInstane()
+    {
+        static Sql sql;
+        return &sql;
+    }
+
     std::string to_string(json& j)
     {
         try{
@@ -108,6 +114,12 @@ protected:
 
 private:
     std::string m_table_name;
+
+    Sql();
+    Sql(const Sql& sql)=default;
+    Sql& operator=(const Sql& sql)=default;
+    Sql(Sql&& sql)=default;
+    Sql& operator=(Sql&& sql)=default;
 };
 
 namespace Data
