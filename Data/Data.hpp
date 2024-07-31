@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <exception>
+#include <sstream>
 
 #include "../MysqlCpp/mysql.hpp"
 #define FMT_HEADER_ONLY 
@@ -43,34 +44,60 @@ public:
             }else if(action=="select"){
                 return select_(j);
             }else{
-                throw "没有匹配的";
+                throw std::invalid_argument("Invalid action: "+action);
             }
+            return "";
         }catch(std::exception& e){
             fprintf(stderr,"%s\n",e.what());
+            return "";
         }
     }
 
 protected:
     std::string insert_(const json& j)
     {
-        std::string pre="(",suf="(";
+        std::stringstream pre,suf;
+        pre<<"(";
+        suf<<"(";
+        bool first=true;
         for(auto& entry: j.items()){
-            pre+=entry.key()+", ";
-            suf+=entry.value().dump()+", ";
+            if(!first){
+                pre<<", ";
+                suf<<", ";
+            }
+            pre<<entry.key();
+            if(json::value_t::string==entry.value().type()){
+                suf<<"'";
+                suf<<entry.value().dump();
+                suf<<"'";
+            }else{
+                suf<<entry.value().dump();
+            }
+            first=false;
         }
-        pre+=")";suf+=")";
-        return fmt::format("insert into {} {} values {}",m_table_name,pre,suf);
+        pre<<")";
+        suf<<")";
+        return fmt::format("insert into {} {} values {}",m_table_name,pre.str(),suf.str());
     }
 
     std::string delete_(const json& j)
     {
-        json con_j=json::parse(j["condition"].get<std::string>());
-        std::string con;
-        for(auto& entry: con_j.items()){
-            con+=entry.key()+"="+entry.value().dump()+" AND";
+        if(j["condition"].is_null()){
+            return fmt::format("delete from {}",m_table_name);
         }
-        for(int i=0;con.size()&&i<4;i++) con.pop_back();
-        return fmt::format("delete from {} where {}",m_table_name,con);
+        json con_j=json::parse(j["condition"].get<std::string>());
+        bool first=true;
+        std::stringstream con;
+        for(auto& entry: con_j.items()){
+            if(!first) con<<" AND ";
+            if(json::value_t::string==entry.value().type()){
+                con<<fmt::format("{} = '{}'",entry.key(),entry.value().dump());
+            }else{
+                con<<fmt::format("{} = {}",entry.key(),entry.value().dump());
+            }
+            first=false;
+        }
+        return fmt::format("delete from {} where {}",m_table_name,con.str());
     }
 
     std::string update_(const json& j)
