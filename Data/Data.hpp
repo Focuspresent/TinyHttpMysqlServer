@@ -19,10 +19,13 @@ bool operator==(const std::string & s1,const char* s2)
     return true;       
 }
 
+/**
+ * @brief sql解析类 将json数据变成sql语句
+ */
 class Sql
 {
 public:
-    static const Sql* GetInstane()
+    static Sql* GetInstance()
     {
         static Sql sql;
         return &sql;
@@ -85,7 +88,7 @@ protected:
         if(j["condition"].is_null()){
             return fmt::format("delete from {}",m_table_name);
         }
-        json con_j=json::parse(j["condition"].get<std::string>());
+        json con_j=j["condtion"].get<json>();
         bool first=true;
         std::stringstream con;
         for(auto& entry: con_j.items()){
@@ -102,41 +105,96 @@ protected:
 
     std::string update_(const json& j)
     {
-        std::string str,con;
+        std::stringstream str,con;
+        bool str_first=true,has_con=false;
         for(auto& entry: j.items()){
             if(entry.key()=="condition"){
-                json con_j=json::parse(entry.value());
+                if(entry.value().is_null()) continue;
+                has_con=true;
+                json con_j=j["condition"].get<json>();
+                bool first=true;
                 for(auto& e: con_j.items()){
-                    con+=e.key()+"="+e.value().dump()+" AND";
+                    if(!first) con<<" AND ";
+                    if(json::value_t::string==e.value().type()){
+                        con<<fmt::format("{} = '{}'",e.key(),e.value().dump());
+                    }else{
+                        con<<fmt::format("{} = {}",e.key(),e.value().dump());
+                    }
+                    first=false;
                 }
             }else{
-                str+=entry.key()+" = "+entry.value().dump()+", ";
+                if(!str_first){
+                    str<<", ";
+                }
+                str<<entry.key();
+                str<<" = ";
+                if(json::value_t::string==entry.value().type()) str<<"'";
+                str<<entry.value().dump();
+                if(json::value_t::string==entry.value().type()) str<<"'";
+                str_first=false;
             }
         }
-        for(int i=0;str.size()&&i<2;i++) str.pop_back();
-        for(int i=0;con.size()&&i<4;i++) con.pop_back();
-        return fmt::format("update {} set {} where {}",m_table_name,str,con);
+        if(has_con){
+            return fmt::format("update {} set {} where {}",m_table_name,str.str(),con.str());
+        }
+        return fmt::format("update {} set {}",m_table_name,str.str());
     }
 
     std::string select_(const json& j)
     {
-        std::string str,con;
+        std::stringstream cols,con,order;
         int number=-1;
+        bool has_cols=false,has_con=false,has_order=false,has_limit=false;
         for(auto& entry: j.items()){
-            if(entry.key()=="condition"){
-                json con_j=json::parse(entry.value());
-                for(auto& e: con_j.items()){
-                    con+=e.key()+"="+e.value().dump()+" AND";
+            if(entry.key()=="cols"){
+                if(entry.value().is_null()) continue;
+                has_cols=true;
+                auto col=j["cols"].get<std::vector<std::string>>();
+                bool first=true;
+                for(auto& s: col){
+                    if(!first) cols<<", ";
+                    cols<<s;
+                    first=false;
                 }
-            }else if(entry.key()=="number"){
-                number=entry.value().get<std::uint32_t>();
-            }else{
-                str+=entry.key()+", ";
+            }else if(entry.key()=="condition"){
+                if(entry.value().is_null()) continue;
+                has_con=true;
+                json con_j=j["condition"].get<json>();
+                bool first=true;
+                for(auto& e: con_j.items()){
+                    if(!first) con<<" AND ";
+                    if(json::value_t::string==e.value().type()){
+                        con<<fmt::format("{} = '{}'",e.key(),e.value().dump());
+                    }else{
+                        con<<fmt::format("{} = {}",e.key(),e.value().dump());
+                    }
+                    first=false;
+                }
+            }else if(entry.key()=="order"){
+                if(entry.value().is_null()) continue;
+                has_order=true;
+                json order_j=j["order"].get<json>();
+                if(order_j["column_name"].is_null()){
+                    has_order=false;
+                    continue;
+                }
+                order<<order_j["column_name"].get<std::string>();
+                if(!order_j["end"].is_null()) order<<" "<<order_j["end"];
+            }else if(entry.key()=="limit"){
+                if(entry.value().is_null()) continue;
+                has_limit=true;
+                number=j["limit"].get<std::size_t>();
             }
         }
-        for(int i=0;con.size()&&i<4;i++) con.pop_back();
-        for(int i=0;str.size()&&i<2;i++) str.pop_back();
-        return  fmt::format("select {} from {} {} {}",str,m_table_name,con.size()?"where "+con:"",number>0?"limit "+std::to_string(number):"");
+        std::stringstream ans;
+        ans<<"select ";
+        if(has_cols) ans<<cols.str()<<" ";
+        else ans<<"* ";
+        ans<<"from "<<m_table_name<<" ";
+        if(has_con) ans<<"where "<<con.str()<<" ";
+        if(has_order) ans<<"order by "<<order.str()<<" ";
+        if(number>0) ans<<"limit "<<number;
+        return ans.str();
     }
 
 private:
@@ -148,6 +206,8 @@ private:
     Sql(Sql&& sql)=default;
     Sql& operator=(Sql&& sql)=default;
 };
+
+#define SQL_PARSE(j) Sql::GetInstance()->to_string(j)
 
 namespace Data
 {
