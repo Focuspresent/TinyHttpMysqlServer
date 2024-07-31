@@ -229,9 +229,15 @@ namespace Data
             return execute_(std::move(req),res);
         }
 
+        int Execute(json& req,json& res)
+        {
+            return execute_(req,res);
+        }
+
     protected:
-        virtual int execute_(const json& req,json& res)=0;
-        
+        virtual int execute_(const json& req,json& res){}
+        virtual int execute_(json& req,json& res){}
+
         Mysql m_mysql;
     private:
         std::string m_url;
