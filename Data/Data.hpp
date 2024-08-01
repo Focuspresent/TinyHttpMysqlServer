@@ -70,12 +70,8 @@ protected:
             }
             pre<<entry.key();
             if(json::value_t::string==entry.value().type()){
-                suf<<"'";
-                suf<<entry.value().dump();
-                suf<<"'";
-            }else{
-                suf<<entry.value().dump();
-            }
+                suf<<"'"<<entry.value().get<std::string>()<<"'";
+            }else suf<<entry.value().dump();
             first=false;
         }
         pre<<")";
@@ -88,13 +84,13 @@ protected:
         if(j["condition"].is_null()){
             return fmt::format("delete from {}",m_table_name);
         }
-        json con_j=j["condtion"].get<json>();
+        json con_j=j["condition"].get<json>();
         bool first=true;
         std::stringstream con;
         for(auto& entry: con_j.items()){
             if(!first) con<<" AND ";
             if(json::value_t::string==entry.value().type()){
-                con<<fmt::format("{} = '{}'",entry.key(),entry.value().dump());
+                con<<fmt::format("{} = '{}'",entry.key(),entry.value().get<std::string>());
             }else{
                 con<<fmt::format("{} = {}",entry.key(),entry.value().dump());
             }
@@ -116,7 +112,7 @@ protected:
                 for(auto& e: con_j.items()){
                     if(!first) con<<" AND ";
                     if(json::value_t::string==e.value().type()){
-                        con<<fmt::format("{} = '{}'",e.key(),e.value().dump());
+                        con<<fmt::format("{} = '{}'",e.key(),e.value().get<std::string>());
                     }else{
                         con<<fmt::format("{} = {}",e.key(),e.value().dump());
                     }
@@ -128,9 +124,11 @@ protected:
                 }
                 str<<entry.key();
                 str<<" = ";
-                if(json::value_t::string==entry.value().type()) str<<"'";
-                str<<entry.value().dump();
-                if(json::value_t::string==entry.value().type()) str<<"'";
+                if(json::value_t::string==entry.value().type()){
+                    str<<"'"<<entry.value().get<std::string>()<<"'";
+                }else{
+                    str<<entry.value().dump();
+                }
                 str_first=false;
             }
         }
@@ -164,7 +162,7 @@ protected:
                 for(auto& e: con_j.items()){
                     if(!first) con<<" AND ";
                     if(json::value_t::string==e.value().type()){
-                        con<<fmt::format("{} = '{}'",e.key(),e.value().dump());
+                        con<<fmt::format("{} = '{}'",e.key(),e.value().get<std::string>());
                     }else{
                         con<<fmt::format("{} = {}",e.key(),e.value().dump());
                     }
@@ -179,7 +177,7 @@ protected:
                     continue;
                 }
                 order<<order_j["column_name"].get<std::string>();
-                if(!order_j["end"].is_null()) order<<" "<<order_j["end"];
+                if(!order_j["end"].is_null()) order<<" "<<order_j["end"].get<std::string>();
             }else if(entry.key()=="limit"){
                 if(entry.value().is_null()) continue;
                 has_limit=true;
@@ -200,7 +198,7 @@ protected:
 private:
     std::string m_table_name;
 
-    Sql();
+    Sql()=default;
     Sql(const Sql& sql)=default;
     Sql& operator=(const Sql& sql)=default;
     Sql(Sql&& sql)=default;
