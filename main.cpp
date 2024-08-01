@@ -63,6 +63,15 @@ int main()
         delete data;
     });
 
+    //增加数据库对外接口
+    server.Post("/operatorMysql",[&](const Request& req,Response& res){
+        BasicData* data=new OperatorMysql(url,user,password,databasename);
+        json res_j,req_j=json::parse(req.body.c_str());
+        data->Execute(req_j,res_j);
+        res.set_content(res_j.dump(),"text/json");
+        delete data;
+    });
+
     server.listen("0.0.0.0",8085);
 
     return 0;

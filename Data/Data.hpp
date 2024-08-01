@@ -400,6 +400,31 @@ namespace Data
             return n;
         }
     };
+
+    class OperatorMysql: public BasicData
+    {
+    public:
+        OperatorMysql(const std::string& url,const std::string& user,const std::string& password,const std::string& databasename)
+        :BasicData(url,user,password,databasename)
+        {
+        }
+
+        int execute_(json& req,json& res) override
+        {
+            res.clear();
+            json mysql_res;
+            //std::cout<<SQL_PARSE(req)<<std::endl;
+            int n=m_mysql.Query(SQL_PARSE(req),mysql_res);
+            if(n){
+                res["message"]="操作失败";
+            }else{
+                res["message"]="操作成功";
+            } 
+            res["errno"]=n;
+            res["return"]=mysql_res;
+            return n;
+        }
+    };
 }
 
 #endif
