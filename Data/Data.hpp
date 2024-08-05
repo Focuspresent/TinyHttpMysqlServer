@@ -146,8 +146,9 @@ protected:
         for(auto& entry: j.items()){
             if(entry.key()=="cols"){
                 if(entry.value().is_null()) continue;
-                has_cols=true;
                 auto col=j["cols"].get<std::vector<std::string>>();
+                if(col.empty()) continue;
+                has_cols=true;
                 bool first=true;
                 for(auto& s: col){
                     if(!first) cols<<", ";
