@@ -2,10 +2,12 @@
 
 #include "Http/httplib.h"
 #include "Data/Data.hpp"
+#include "Config.hpp"
 
 using namespace std;
 using namespace httplib;
 using namespace data;
+using namespace config;
 
 //解析get请求后面的参数
 json parse_get(const Request& req)
@@ -17,13 +19,18 @@ json parse_get(const Request& req)
     return std::move(j);
 }
 
-int main()
-{
+int main(int argc,char* argv[])
+{   
+    if(argc!=2){
+        fprintf(stderr,"Usage: %s *.conf\n",argv[0]);
+        exit(-1);
+    }
     Server server;
-    string url="47.96.237.24";
-    string user="root";
-    string password="Qwe123456789...++";
-    string databasename="qianduoduo";
+    Config cfg(argv[1]);
+    string url=cfg.get("url");
+    string user=cfg.get("user");
+    string password=cfg.get("password");
+    string databasename=cfg.get("databasename");
 
     ///登录
     server.Post("/userLogin",[&](const Request& req,Response& res){
@@ -72,7 +79,7 @@ int main()
         delete data;
     });
 
-    server.listen("0.0.0.0",8085);
+    server.listen("0.0.0.0",stoi(cfg.get("listenport")));
 
     return 0;
 }
