@@ -3,7 +3,7 @@
 #include "../Data/Data.hpp"
 
 using namespace std;
-using namespace Data;
+using namespace data;
 
 #define print(a) cout<<(a)<<endl;
 

@@ -207,7 +207,7 @@ private:
 
 #define SQL_PARSE(j) Sql::GetInstance()->to_string(j)
 
-namespace Data
+namespace data
 {
     enum{
         SQL_FAIL=500,
