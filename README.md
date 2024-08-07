@@ -14,8 +14,8 @@ sudo apt install libmysqlclient-dev
 ```
 #### 2. 运行
 ``` shell
-make
-./CloudServer *.conf # *.conf是程序的配置文件
+chmod a+x build.sh
+./build.sh
 ```
 #### 3. 配置文件
 k=v;为一行;键值对等号附近没有空格<br/>
