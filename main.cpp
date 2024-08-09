@@ -1,4 +1,5 @@
 #include <iostream>
+#include <signal.h>
 
 #include "Http/httplib.h"
 #include "Data/Data.hpp"
@@ -19,6 +20,21 @@ json parse_get(const Request& req)
     return std::move(j);
 }
 
+string path;
+string url;
+string user;
+string password;
+string databasename;
+
+void process_signal2(int sig)
+{
+    Config cfg(path);
+    url=cfg.get("url");
+    user=cfg.get("user");
+    password=cfg.get("password");
+    databasename=cfg.get("databasename");
+}
+
 int main(int argc,char* argv[])
 {   
     if(argc!=2){
@@ -26,11 +42,17 @@ int main(int argc,char* argv[])
         exit(-1);
     }
     Server server;
-    Config cfg(argv[1]);
-    string url=cfg.get("url");
-    string user=cfg.get("user");
-    string password=cfg.get("password");
-    string databasename=cfg.get("databasename");
+    path=argv[1];
+
+    //读取配置文件
+    Config cfg(path);
+    url=cfg.get("url");
+    user=cfg.get("user");
+    password=cfg.get("password");
+    databasename=cfg.get("databasename");
+
+    //增加信号处理
+    signal(SIGINT,process_signal2);
 
     ///登录
     server.Post("/userLogin",[&](const Request& req,Response& res){
